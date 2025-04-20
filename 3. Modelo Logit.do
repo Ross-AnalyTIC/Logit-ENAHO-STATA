@@ -1,18 +1,14 @@
 *==================================
 * ESTIMACIÓN DEL MODELO LOGIT 
 *==================================
-* By: Rossy Machaca
-*-------------------
+
 
 cls        
 clear all
 set more off
 
-global inputs "D:\TESIS\DATA_RURAL\1_Inputs"
-global outputs "D:\TESIS\DATA_RURAL\2_Outputs"
-global cuadros "D:\TESIS\DATA_RURAL\2_Outputs\Cuadros"
-global graficos "D:\TESIS\DATA_RURAL\2_Outputs\Graficos"
-global sintax "D:\TESIS\DATA_RURAL\3_Sintax"
+global outputs "D:\DATA_RURAL\2_Outputs"
+global cuadros "D:\DATA_RURAL\2_Outputs\Cuadros"
 
 cd "$outputs"
 
@@ -43,20 +39,6 @@ putexcel A2=matrix(matriz_cor), rownames
 tab sierra selva, chi2  V //Ho: Hay independencia (no hay relación)
 tab sierra electricidad, chi2  V //Chi2 con V de Cramer para variables categoricas no ordinales
 
-* Chi cuadrado
-tab internet sexo, chi
-tab internet pobreza, chi
-tab internet niveduc, chi
-tab internet idioma, chi 
-tab internet electricidad, chi 
-tab internet pc, chi 
-tab internet regnat, chi 
-
-* Chi cuadrado
-tab internet edad, chi
-tab internet mierperho, chi
-tab internet ingper, chi
-
 *---------------------
 * Modelo 1 (general)
 *---------------------
@@ -65,7 +47,7 @@ global xb1 "sexo edad mieperho log_ingper pobre i.niveduc idioma electricidad pc
 logit internet $xb1  
 estimates store m1 
 
-/* Modelo 2 (sin sexo)
+/* Modelo 2 (sin variable sexo)
 *----------------------------------------
 global xb2 "log_ingper edad idioma mieperho pobre electricidad i.regnat i.niveduc"
  
@@ -76,7 +58,6 @@ lstat
 *criterios de información para comparar modelos
 estimates table m1 m2, stat(aic bic) // se prefiere el modelo 1
 */
-
 
 ** predicción de probabilidades
 predict pr_logit
