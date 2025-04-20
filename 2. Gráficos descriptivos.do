@@ -1,18 +1,14 @@
 *===============================
-* ANÁLISIS GRÁFICO
+* ANÁLISIS GRÁFICO (2020-2023)
 *===============================
-* By: Rossy Machaca
-*-------------------
 
 cls        
 clear all
 set more off
 
-global inputs "D:\TESIS\DATA_RURAL\1_Inputs"
-global outputs "D:\TESIS\DATA_RURAL\2_Outputs"
-global cuadros "D:\TESIS\DATA_RURAL\2_Outputs\Cuadros"
-global graficos "D:\TESIS\DATA_RURAL\2_Outputs\Graficos"
-global sintax "D:\TESIS\DATA_RURAL\3_Sintax"
+global inputs "D:\DATA_RURAL\1_Inputs"
+global outputs "D:\DATA_RURAL\2_Outputs"
+global graficos "D:\DATA_RURAL\2_Outputs\Graficos"
 
 cd "$outputs"
 
@@ -223,20 +219,4 @@ tab internet p612 if p203==1, miss row nofreq //
 // Porcentaje de hogares según región natural
 tab internet regnat if p203==1, col nofreq
 
-
-
-
-
-
-
-
-
-
-
-*graph export "hogaresinternetsexo-2020.png", as(png) replace
-
-
-*graph box edad, over(rural) ///
- *   title("Edad por población rural y urbana 2022") ///
- *   ytitle("Edad") 
 
