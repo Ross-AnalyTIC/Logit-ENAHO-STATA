@@ -13,7 +13,7 @@ global cuadros "D:\DATA_RURAL\2_Outputs\Cuadros"
 cd "$outputs"
 
 *---------------------------------
-* 2020
+* Análisis gráfico
 *---------------------------------
 *do "$sintax/UTratamiento de datos_2020"
 
@@ -62,4 +62,18 @@ tab internet regnat if p203==1, col nofreq
 // Porcentaje de hogares según departamento
 tab internet dpto if p203==1, col nofreq
 
+*---------------------
+* Correlaciones
+*---------------------
 
+global X "sexo edad mieperho log_ingper pobre neduc2 neduc3 neduc4 neduc5 idioma electricidad pc sierra selva" //
+
+sum $X
+correlate $X //para variables discretas
+return list
+
+matrix matriz_cor=r(C)
+matrix list matriz_cor
+
+putexcel set "$cuadros/correlaciones", replace
+putexcel A2=matrix(matriz_cor), rownames 
