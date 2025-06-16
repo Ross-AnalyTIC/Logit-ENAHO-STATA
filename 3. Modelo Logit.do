@@ -1,7 +1,6 @@
-*==================================
-* ESTIMACIÓN DEL MODELO LOGIT 
-*==================================
-
+*===================================
+* ESTIMACIÓN DEL MODELO LOGIT (2023)
+*===================================
 
 cls        
 clear all
@@ -9,31 +8,11 @@ set more off
 
 global outputs "D:\DATA_RURAL\2_Outputs"
 global cuadros "D:\DATA_RURAL\2_Outputs\Cuadros"
-
 cd "$outputs"
 
-*do "$sintax/Union_limpieza_2020"
+*do "$sintax/Union_limpieza_2023"
 
 use "$outputs\rural-2023", clear
-
-describe
-sum //verificar valores perdidos
-
-*---------------------
-* Correlaciones
-*---------------------
-
-global X "sexo edad mieperho log_ingper pobre neduc2 neduc3 neduc4 neduc5 idioma electricidad pc sierra selva" //
-
-sum $X
-correlate $X //para variables discretas
-return list
-
-matrix matriz_cor=r(C)
-matrix list matriz_cor
-
-putexcel set "$cuadros/correlaciones", replace
-putexcel A2=matrix(matriz_cor), rownames 
 
 * Chi cuadrado
 tab sierra selva, chi2  V //Ho: Hay independencia (no hay relación)
@@ -42,16 +21,16 @@ tab sierra electricidad, chi2  V //Chi2 con V de Cramer para variables categoric
 *---------------------
 * Modelo 1 (general)
 *---------------------
-global xb1 "sexo edad mieperho log_ingper pobre i.niveduc idioma electricidad pc i.regnat"
+global xb1 "sexo edad mieperho log_ingper pobre i.niveduc idioma electricidad i.regnat"
 
 logit internet $xb1  
 estimates store m1 
 
 /* Modelo 2 (sin variable sexo)
-*----------------------------------------
+
 global xb2 "log_ingper edad idioma mieperho pobre electricidad i.regnat i.niveduc"
  
-logit internet $xb2 //
+logit internet $xb2 
 estimates store m2
 lstat
 
@@ -59,60 +38,57 @@ lstat
 estimates table m1 m2, stat(aic bic) // se prefiere el modelo 1
 */
 
-** predicción de probabilidades
+*-----------------------
+*    Efectos marginales
+*-----------------------
+
+* Promedio de los Efectos marginales
+margins, dydx(*)
+*margins, eyex(log_ingper) //para variables continuas
+
+* Efecto marginal en el punto promedio
+logit internet $xb1
+margins, dydx(*) atmean 
+
+*------------------------------
+* Predicción de probabilidades
+*------------------------------
+
 predict pr_logit
 br pr_logit internet
 sum pr_logit
 
-** Calculo el Y predicho con corte 0.5
+* Calculo el Y predicho con corte 0.5
 gen internet_est=(pr_logit>=0.5) //por defecto 
 tab internet_est internet 
 br internet_est internet 
 
-** Para ver la precisión, sensibiidad y especificidad
+*--------------------------------------------
+* Precisión, especificidad y sensibilidad
+*--------------------------------------------
 lsens, xline(0.5)
 
-* Matríz de confusión
+* Matríz de confusión (clasificación)
 lstat //ver tambien Seudo R2, es complementario pero debe de ser aceptable
 lstat, cutoff(0.8)
 
-** Curva ROC (se busca el mayor área bajo la curva)
+*-----------------------------------------------------
+* Curva ROC (se busca el mayor área bajo la curva)
+*-----------------------------------------------------
 lroc
-
 gen internet_est2=(pr_logit>=0.25)
-
 tab internet_est2 internet 
 
-** calculo una variable predicha pero con corte 0.21
+* Cálculo una variable predicha pero con corte 0.21
 drop internet_est
 gen internet_est=(pr_logit>=0.21) //corregido
 
 tab  internet_est internet, col
 
-*-----------------------
-*    Efectos marginales
-*-----------------------
+*--------------------------------------------
+* Comparando modelos logit y probit
+*--------------------------------------------
 
-** Promedio de los Efectos marginales
-** Esto es lo que se presenta generalmente
-margins, dydx(*)
-*margins, eyex(log_ingper) //para variables continuas
-
-** Efecto marginal en el punto promedio
-logit internet $xb1
-margins, dydx(*) atmean 
-
-** Probabilidad de Y=1 en un punto especifico
-*logit internet $xb2
-*margins, at(niveduc=2 sexo=0 electricidad=1)
-*margins, at(niveduc=2 sexo=1 electricidad=1)
-
-** Predicción de probabilidades
-predict xbb, xb 
-label var xbb "xb-logit"
-scatter internet pr_logit xbb, symbol(+ o) jitter(2) l1title("Pr Logit")
-
-** Comparando modelos logit y probit
 logit internet $xb1 
 estimate store  modelo1
 
@@ -120,7 +96,6 @@ probit internet $xb1
 estimate store  modelo2
 
 *esttab modelo1 modelo2, aic bic  star(* 0.10 ** 0.05 *** 0.01)
-
 *ssc instal fitstat
 
 logit internet $xb1 
@@ -129,8 +104,7 @@ fitstat
 probit internet $xb1 
 fitstat
 
-** Comparar efectos marginales
-*---------------------------------
+* Comparación de efectos marginales
 
 quietly logit internet $xb1
 lstat
@@ -146,24 +120,18 @@ matrix probit_dydx=r(b)'
 matrix unido=matrix(logit_dydx,probit_dydx)
 matrix list unido
 
+*-----------------------------------------------------------------------
+* Factor de Inflación de la Varianza (VIF) y supuestos complemnetarios
+*-----------------------------------------------------------------------
 
-* ODS Ratio
-*-----------
-
-logistic internet $xb1
-
-
-** Calcular los factores de inflación de la varianza (VIF)
-** primero corremos una regresión estat
 reg internet $xb1
 estat vif
 
-** verificación de bondad de ajuste
+* verificación de bondad de ajuste
 logit internet $xb1
 estat gof
 
-
-** breushc pegan"
+* Breusch Pagan
 predict uhat, residuals
 regress uhat $xb1
 estat hettest
