@@ -1,7 +1,7 @@
 
-*===============================
-* LIMPIEZA Y UNIÓN DE DATOS
-*===============================
+*====================================
+* CARGA Y ACONDICIONAMIENTO DE DATOS
+*====================================
 
 cls        
 clear all
@@ -12,7 +12,7 @@ global inputs "D:\DATA_RURAL\1_Inputs"
 cd "$inputs"
 
 *---------------------------------------------------------
-* 1. CONVIRTIENDO DATOS A CÓDIGO LATINO
+* 1. CONVERSIÓN DE DATOS A CÓDIGO LATINO
 *---------------------------------------------------------
 
 unicode analyze *
@@ -23,88 +23,70 @@ unicode translate *
 * 2. LIMPIEZA DE BASES DE DATOS
 *---------------------------------------------------------
 
-* EDUCACIÓN - 300 (3 a más años)
-*---------------------------------------------------------
+
+// EDUCACIÓN - 300 (3 a más años)
 
 use "$inputs\enaho01-2020-300", clear
 
-*- Generamos identificador único
+*  Generamos identificador único
 isid conglome vivienda hogar codperso
 gl id_persona "conglome vivienda hogar codperso"
 
-drop if codinfo=="00" //
-drop if p301a==. // 
-drop if p301a==12 // se borra educacion especial
+* Removemos datos vacíos, missing date y otros items
+drop if codinfo=="00" // quita valores vacios
+drop if p301a==. // borra missing date
+drop if p301a==12 // borra educacion especial
 keep if p204==1 // solo miembros del hogar
-count //
+count 
 
 save "$outputs\Educacion-2020",replace
 
-* EMPLEO - 500 (14 a más años)
-*---------------------------------------------------------
+
+// EMPLEO - 500 (14 a más años)
 
 use "$inputs\enaho01-2020-500", clear
 
-*- Generamos identificador único 
 isid conglome vivienda hogar codperso
 gl id_persona "conglome vivienda hogar codperso"
 
-drop if codinfor=="00" // 
-keep if p204==1 // 
-count // 
+drop if codinfor=="00" 
+keep if p204==1 
+count 
 
 save "$outputs\Empleo-2020",replace
 
-* SUMARIA 
-*---------------------------------------------------------
+
+// SUMARIA 
 
 use "$inputs\sumaria-2020",clear 
-
-*- Generamos identificador único de hogar
-isid conglome vivienda hogar
-gl id_hogar "conglome vivienda hogar"
-count // 
-
-save "$outputs\Sumaria-2020",replace
-
-*  HOGARES - 100
-*---------------------------------------------------------
-
-use "$inputs\enaho01-2020-100", clear
-
-*- Generamos identificador único de hogar
-isid conglome vivienda hogar
-gl id_hogar "conglome vivienda hogar"
-count //
-
-save "$outputs\Hogares-2020",replace
-
-* EQUIPAMIENTO HOGARES - 612
-*---------------------------------------------------------
-
-use "$inputs\enaho01-2020-612", clear
-
-count // 
-duplicates report conglome vivienda hogar
-keep conglome vivienda hogar p612n p612
-keep if p612n==7 & p612
 
 * Generamos identificador único de hogar
 isid conglome vivienda hogar
 gl id_hogar "conglome vivienda hogar"
-count // 
+count 
 
-save "$outputs\equipamiento-2020",replace
+save "$outputs\Sumaria-2020",replace
 
-* MIEMBROS DEL HOGAR - 200
-*---------------------------------------------------------
+//  HOGARES - 100
+
+use "$inputs\enaho01-2020-100", clear
+
+* Generamos identificador único de hogar
+isid conglome vivienda hogar
+gl id_hogar "conglome vivienda hogar"
+count 
+
+save "$outputs\Hogares-2020",replace
+
+
+// MIEMBROS DEL HOGAR - 200
 
 use "$inputs\enaho01-2020-200", clear
 
 * Generamos identificador único
 isid conglome vivienda hogar codperso
 gl id_persona "conglome vivienda hogar codperso"
-count // 
+count 
 
 save "$outputs\Poblacion-2020",replace
 
@@ -112,14 +94,13 @@ save "$outputs\Poblacion-2020",replace
 * 3. UNIÓN DE BASES DE DATOS
 *---------------------------------------------------------
 
-* Hogares-Sumaria-Equipamiento
-*---------------------------------------------------------
+// Hogares-Sumaria
 
 use "$outputs\Hogares-2020",clear  
 merge 1:1 conglome vivienda hogar using "$outputs\Sumaria-2020"
 keep if _merge==3 
 drop _merge
-count // 
+count 
 
 merge 1:1 conglome vivienda hogar using "$outputs\equipamiento-2020"
 keep if _merge==3 
